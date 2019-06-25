@@ -785,14 +785,25 @@ test.cb('reconnect after closing', t => {
     });
 });
 
-// test.cb('reconnect after closing', t => {
-//     const wss = new WebSocketServer({port: PORT});
-//     const ws = new ReconnectingWebSocket(URL, undefined, {
-//         minReconnectionDelay: 100,
-//         maxReconnectionDelay: 200,
-//     });
+test.cb('ensure there is no delay on first connect', t => {
+    const wss = new WebSocketServer({port: PORT});
+    const ws = new ReconnectingWebSocket(URL, undefined, {
+        minReconnectionDelay: 5 * 1000,
+    });
 
-//     ws.addEventListener('open', () => {});
+    const MAX_DIFF_TIME_MS = 1000;
+    const connectionTimestamp = Date.now();
 
-//     ws.addEventListener('close', () => {});
-// });
+    ws.addEventListener('open', () => {
+        ws.close();
+        const diffTime = Date.now() - connectionTimestamp;
+        if (diffTime > MAX_DIFF_TIME_MS) {
+            t.fail();
+        }
+    });
+
+    ws.addEventListener('close', () => {
+        wss.close();
+        t.end();
+    });
+});
